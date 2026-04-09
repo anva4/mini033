@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Minions Market"
+version = "1.0.0"
+id = "artifacts/minions-market"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 5173
+
+[services.development]
+run = "pnpm --filter @workspace/minions-market run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/minions-market", "run", "build" ]
+publicDir = "artifacts/minions-market/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "5173"
+BASE_PATH = "/"

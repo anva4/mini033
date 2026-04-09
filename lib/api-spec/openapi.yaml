@@ -1,22 +1,29 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Minions Market API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
-    description: Health operations
+  - name: auth
+  - name: users
+  - name: products
+  - name: categories
+  - name: deals
+  - name: wallet
+  - name: messages
+  - name: admin
+  - name: stats
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +31,2062 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Register with telegram code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterBody"
+      responses:
+        "200":
+          description: Auth response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginBody"
+      responses:
+        "200":
+          description: Auth response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+
+  /auth/telegram:
+    post:
+      operationId: telegramAuth
+      tags: [auth]
+      summary: Authenticate via Telegram Mini App
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TelegramAuthBody"
+      responses:
+        "200":
+          description: Auth response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /auth/request-code:
+    post:
+      operationId: requestAuthCode
+      tags: [auth]
+      summary: Request auth code via Telegram bot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RequestCodeBody"
+      responses:
+        "200":
+          description: Code sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                required: [success]
+
+  /users/{id}:
+    get:
+      operationId: getUser
+      tags: [users]
+      summary: Get user profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+
+  /users/{id}/products:
+    get:
+      operationId: getUserProducts
+      tags: [users]
+      summary: Get user products
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Products list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductsListResponse"
+
+  /users/{id}/reviews:
+    get:
+      operationId: getUserReviews
+      tags: [users]
+      summary: Get user reviews
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Reviews list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Review"
+
+  /profile:
+    put:
+      operationId: updateProfile
+      tags: [users]
+      summary: Update profile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProfileBody"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /categories:
+    get:
+      operationId: getCategories
+      tags: [categories]
+      summary: Get all categories
+      responses:
+        "200":
+          description: Categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Category"
+
+  /products:
+    get:
+      operationId: listProducts
+      tags: [products]
+      summary: List products
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: minPrice
+          in: query
+          schema:
+            type: number
+        - name: maxPrice
+          in: query
+          schema:
+            type: number
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [newest, cheapest, expensive, popular]
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Products
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductsListResponse"
+    post:
+      operationId: createProduct
+      tags: [products]
+      summary: Create product
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProductBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+
+  /products/featured:
+    get:
+      operationId: getFeaturedProducts
+      tags: [products]
+      summary: Featured/promoted products
+      responses:
+        "200":
+          description: Featured products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+
+  /products/stats:
+    get:
+      operationId: getMarketplaceStats
+      tags: [stats]
+      summary: Marketplace statistics
+      responses:
+        "200":
+          description: Stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MarketplaceStats"
+
+  /products/{id}:
+    get:
+      operationId: getProduct
+      tags: [products]
+      summary: Get product by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+    put:
+      operationId: updateProduct
+      tags: [products]
+      summary: Update product
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProductBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+    delete:
+      operationId: deleteProduct
+      tags: [products]
+      summary: Delete product
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+
+  /products/{id}/favorite:
+    post:
+      operationId: toggleFavorite
+      tags: [products]
+      summary: Toggle favorite
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Toggled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  favorited:
+                    type: boolean
+                required: [favorited]
+
+  /favorites:
+    get:
+      operationId: getFavorites
+      tags: [products]
+      summary: Get user favorites
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Favorites
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+
+  /deals:
+    get:
+      operationId: listDeals
+      tags: [deals]
+      summary: List user deals
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [buyer, seller, all]
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deals list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DealsListResponse"
+    post:
+      operationId: createDeal
+      tags: [deals]
+      summary: Create deal (buy product)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDealBody"
+      responses:
+        "201":
+          description: Deal created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Deal"
+
+  /deals/{id}:
+    get:
+      operationId: getDeal
+      tags: [deals]
+      summary: Get deal by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deal
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Deal"
+
+  /deals/{id}/confirm:
+    post:
+      operationId: confirmDeal
+      tags: [deals]
+      summary: Confirm deal received
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Confirmed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Deal"
+
+  /deals/{id}/deliver:
+    post:
+      operationId: deliverDeal
+      tags: [deals]
+      summary: Deliver deal data
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeliverBody"
+      responses:
+        "200":
+          description: Delivered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Deal"
+
+  /deals/{id}/dispute:
+    post:
+      operationId: disputeDeal
+      tags: [deals]
+      summary: Open dispute
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DisputeBody"
+      responses:
+        "200":
+          description: Disputed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Deal"
+
+  /deals/{id}/review:
+    post:
+      operationId: leaveDealReview
+      tags: [deals]
+      summary: Leave review for deal
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewBody"
+      responses:
+        "201":
+          description: Review created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Review"
+
+  /wallet/balance:
+    get:
+      operationId: getWalletBalance
+      tags: [wallet]
+      summary: Get wallet balance
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Balance
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WalletBalance"
+
+  /wallet/deposit:
+    post:
+      operationId: createDeposit
+      tags: [wallet]
+      summary: Create deposit
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DepositBody"
+      responses:
+        "200":
+          description: Deposit URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DepositResponse"
+
+  /wallet/withdraw:
+    post:
+      operationId: createWithdraw
+      tags: [wallet]
+      summary: Create withdrawal
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WithdrawBody"
+      responses:
+        "200":
+          description: Withdrawal created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                required: [success]
+
+  /wallet/transactions:
+    get:
+      operationId: listTransactions
+      tags: [wallet]
+      summary: List transactions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Transactions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionsListResponse"
+
+  /wallet/webhook/{gateway}:
+    post:
+      operationId: paymentWebhook
+      tags: [wallet]
+      summary: Payment gateway webhook
+      parameters:
+        - name: gateway
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [rukassa, nowpayments, crystalpay]
+      responses:
+        "200":
+          description: OK
+
+  /messages/chats:
+    get:
+      operationId: getChats
+      tags: [messages]
+      summary: Get chat list
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Chats
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Chat"
+
+  /messages/{userId}:
+    get:
+      operationId: getMessages
+      tags: [messages]
+      summary: Get messages with user
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: before
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Message"
+    post:
+      operationId: sendMessage
+      tags: [messages]
+      summary: Send message
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendMessageBody"
+      responses:
+        "201":
+          description: Sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+
+  /admin/stats:
+    get:
+      operationId: getAdminStats
+      tags: [admin]
+      summary: Admin dashboard stats
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Admin stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminStats"
+
+  /admin/users:
+    get:
+      operationId: adminListUsers
+      tags: [admin]
+      summary: List all users (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Users list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUsersResponse"
+
+  /admin/users/{id}/ban:
+    post:
+      operationId: adminBanUser
+      tags: [admin]
+      summary: Ban/unban user
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                banned:
+                  type: boolean
+              required: [banned]
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /admin/users/{id}/verify:
+    post:
+      operationId: adminVerifyUser
+      tags: [admin]
+      summary: Verify user
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Verified
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /admin/products:
+    get:
+      operationId: adminListProducts
+      tags: [admin]
+      summary: List all products (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Products
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductsListResponse"
+
+  /admin/products/{id}/moderate:
+    post:
+      operationId: adminModerateProduct
+      tags: [admin]
+      summary: Moderate product
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [active, rejected, hidden]
+                reason:
+                  type: string
+              required: [status]
+      responses:
+        "200":
+          description: Moderated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+
+  /admin/deals:
+    get:
+      operationId: adminListDeals
+      tags: [admin]
+      summary: List all deals (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deals
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DealsListResponse"
+
+  /admin/deals/{id}/resolve:
+    post:
+      operationId: adminResolveDeal
+      tags: [admin]
+      summary: Resolve disputed deal
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                resolution:
+                  type: string
+                  enum: [refund_buyer, pay_seller]
+                comment:
+                  type: string
+              required: [resolution]
+      responses:
+        "200":
+          description: Resolved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Deal"
+
+  /admin/withdrawals:
+    get:
+      operationId: adminListWithdrawals
+      tags: [admin]
+      summary: List pending withdrawals
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Withdrawals
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Transaction"
+
+  /admin/withdrawals/{id}/process:
+    post:
+      operationId: adminProcessWithdrawal
+      tags: [admin]
+      summary: Process withdrawal
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action:
+                  type: string
+                  enum: [approve, reject]
+              required: [action]
+      responses:
+        "200":
+          description: Processed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transaction"
+
+  /admin/categories:
+    post:
+      operationId: adminCreateCategory
+      tags: [admin]
+      summary: Create category
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCategoryBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+
+  /admin/categories/{id}:
+    put:
+      operationId: adminUpdateCategory
+      tags: [admin]
+      summary: Update category
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCategoryBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+    delete:
+      operationId: adminDeleteCategory
+      tags: [admin]
+      summary: Delete category
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+
+  /admin/users/{id}:
+    get:
+      operationId: adminGetUser
+      tags: [admin]
+      summary: Get detailed user info (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUserDetail"
+
+  /admin/users/{id}/role:
+    post:
+      operationId: adminSetUserRole
+      tags: [admin]
+      summary: Set admin role for user
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                isAdmin:
+                  type: boolean
+              required: [isAdmin]
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /admin/users/{id}/balance:
+    post:
+      operationId: adminAdjustBalance
+      tags: [admin]
+      summary: Manually adjust user balance
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminBalanceAdjustBody"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /admin/products/{id}:
+    delete:
+      operationId: adminDeleteProduct
+      tags: [admin]
+      summary: Delete product permanently (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+
+  /admin/transactions:
+    get:
+      operationId: adminListTransactions
+      tags: [admin]
+      summary: List all platform transactions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: userId
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Transactions list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminTransactionsResponse"
+
+  /admin/stats/revenue:
+    get:
+      operationId: getAdminRevenueChart
+      tags: [admin]
+      summary: Daily revenue chart for admin
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: days
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Revenue chart data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RevenueChartPoint"
+
+  /admin/reviews:
+    get:
+      operationId: adminListReviews
+      tags: [admin]
+      summary: List all reviews (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Reviews list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminReviewsResponse"
+
+  /admin/reviews/{id}:
+    delete:
+      operationId: adminDeleteReview
+      tags: [admin]
+      summary: Delete review (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+
+  /admin/broadcast:
+    post:
+      operationId: adminBroadcast
+      tags: [admin]
+      summary: Send broadcast message to users
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminBroadcastBody"
+      responses:
+        "200":
+          description: Sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sent:
+                    type: integer
+                required: [sent]
+
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+
   schemas:
     HealthStatus:
       type: object
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    RegisterBody:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+        code:
+          type: string
+        telegramUsername:
+          type: string
+      required: [username, password, code]
+
+    LoginBody:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+      required: [username, password]
+
+    TelegramAuthBody:
+      type: object
+      properties:
+        initData:
+          type: string
+      required: [initData]
+
+    RequestCodeBody:
+      type: object
+      properties:
+        telegramUsername:
+          type: string
+      required: [telegramUsername]
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+      required: [token, user]
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        avatar:
+          type: string
+        bio:
+          type: string
+        balance:
+          type: number
+        frozenBalance:
+          type: number
+        totalSales:
+          type: integer
+        totalPurchases:
+          type: integer
+        totalVolume:
+          type: number
+        rating:
+          type: number
+        reviewCount:
+          type: integer
+        isAdmin:
+          type: boolean
+        isVerified:
+          type: boolean
+        isBanned:
+          type: boolean
+        sellerLevel:
+          type: string
+        telegramId:
+          type: string
+        refCode:
+          type: string
+        createdAt:
+          type: integer
+        lastActive:
+          type: integer
+      required: [id, username]
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        firstName:
+          type: string
+        avatar:
+          type: string
+        bio:
+          type: string
+        totalSales:
+          type: integer
+        totalPurchases:
+          type: integer
+        rating:
+          type: number
+        reviewCount:
+          type: integer
+        isVerified:
+          type: boolean
+        sellerLevel:
+          type: string
+        createdAt:
+          type: integer
+        lastActive:
+          type: integer
+        productCount:
+          type: integer
+      required: [id, username]
+
+    UpdateProfileBody:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        avatar:
+          type: string
+        bio:
+          type: string
+
+    Category:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+        icon:
+          type: string
+        productCount:
+          type: integer
+        sortOrder:
+          type: integer
+      required: [id, name, slug]
+
+    CreateCategoryBody:
+      type: object
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+        icon:
+          type: string
+        sortOrder:
+          type: integer
+      required: [name, slug]
+
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+        sellerId:
+          type: string
+        seller:
+          $ref: "#/components/schemas/User"
+        title:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+        category:
+          type: string
+        categoryName:
+          type: string
+        subcategory:
+          type: string
+        images:
+          type: array
+          items:
+            type: string
+        deliveryType:
+          type: string
+          enum: [auto, manual]
+        game:
+          type: string
+        server:
+          type: string
+        status:
+          type: string
+        views:
+          type: integer
+        soldCount:
+          type: integer
+        tags:
+          type: array
+          items:
+            type: string
+        isFavorited:
+          type: boolean
+        isPromoted:
+          type: boolean
+        createdAt:
+          type: integer
+        updatedAt:
+          type: integer
+      required: [id, sellerId, title, price, category]
+
+    CreateProductBody:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+        category:
+          type: string
+        subcategory:
+          type: string
+        images:
+          type: array
+          items:
+            type: string
+        deliveryType:
+          type: string
+          enum: [auto, manual]
+        deliveryData:
+          type: string
+        game:
+          type: string
+        server:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+      required: [title, description, price, category]
+
+    UpdateProductBody:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+        category:
+          type: string
+        subcategory:
+          type: string
+        images:
+          type: array
+          items:
+            type: string
+        deliveryType:
+          type: string
+          enum: [auto, manual]
+        deliveryData:
+          type: string
+        game:
+          type: string
+        server:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+
+    ProductsListResponse:
+      type: object
+      properties:
+        products:
+          type: array
+          items:
+            $ref: "#/components/schemas/Product"
+        total:
+          type: integer
+        page:
+          type: integer
+        totalPages:
+          type: integer
+      required: [products, total]
+
+    Deal:
+      type: object
+      properties:
+        id:
+          type: string
+        dealNumber:
+          type: integer
+        buyerId:
+          type: string
+        buyer:
+          $ref: "#/components/schemas/User"
+        sellerId:
+          type: string
+        seller:
+          $ref: "#/components/schemas/User"
+        productId:
+          type: string
+        product:
+          $ref: "#/components/schemas/Product"
+        amount:
+          type: number
+        sellerAmount:
+          type: number
+        commission:
+          type: number
+        status:
+          type: string
+          enum: [pending, paid, delivered, completed, disputed, cancelled, refunded]
+        deliveryData:
+          type: string
+        buyerConfirmed:
+          type: boolean
+        autoCompleteAt:
+          type: integer
+        disputeReason:
+          type: string
+        createdAt:
+          type: integer
+      required: [id, buyerId, sellerId, productId, amount, status]
+
+    CreateDealBody:
+      type: object
+      properties:
+        productId:
+          type: string
+      required: [productId]
+
+    DeliverBody:
+      type: object
+      properties:
+        deliveryData:
+          type: string
+      required: [deliveryData]
+
+    DisputeBody:
+      type: object
+      properties:
+        reason:
+          type: string
+      required: [reason]
+
+    ReviewBody:
+      type: object
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+      required: [rating]
+
+    Review:
+      type: object
+      properties:
+        id:
+          type: string
+        dealId:
+          type: string
+        reviewerId:
+          type: string
+        reviewer:
+          $ref: "#/components/schemas/User"
+        sellerId:
+          type: string
+        rating:
+          type: integer
+        comment:
+          type: string
+        createdAt:
+          type: integer
+      required: [id, reviewerId, sellerId, rating]
+
+    DealsListResponse:
+      type: object
+      properties:
+        deals:
+          type: array
+          items:
+            $ref: "#/components/schemas/Deal"
+        total:
+          type: integer
+        page:
+          type: integer
+        totalPages:
+          type: integer
+      required: [deals, total]
+
+    WalletBalance:
+      type: object
+      properties:
+        balance:
+          type: number
+        frozenBalance:
+          type: number
+        totalDeposited:
+          type: number
+        totalWithdrawn:
+          type: number
+        totalEarned:
+          type: number
+      required: [balance, frozenBalance]
+
+    DepositBody:
+      type: object
+      properties:
+        amount:
+          type: number
+        gateway:
+          type: string
+          enum: [rukassa, nowpayments, crystalpay]
+        currency:
+          type: string
+      required: [amount, gateway]
+
+    DepositResponse:
+      type: object
+      properties:
+        payUrl:
+          type: string
+        orderId:
+          type: string
+      required: [payUrl, orderId]
+
+    WithdrawBody:
+      type: object
+      properties:
+        amount:
+          type: number
+        method:
+          type: string
+        details:
+          type: string
+      required: [amount, method, details]
+
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        type:
+          type: string
+          enum: [deposit, withdrawal, purchase, sale_revenue, commission, refund]
+        amount:
+          type: number
+        currency:
+          type: string
+        status:
+          type: string
+          enum: [pending, completed, failed, cancelled]
+        description:
+          type: string
+        gatewayType:
+          type: string
+        balanceBefore:
+          type: number
+        balanceAfter:
+          type: number
+        createdAt:
+          type: integer
+      required: [id, userId, type, amount, status]
+
+    TransactionsListResponse:
+      type: object
+      properties:
+        transactions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Transaction"
+        total:
+          type: integer
+        page:
+          type: integer
+        totalPages:
+          type: integer
+      required: [transactions, total]
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+        senderId:
+          type: string
+        sender:
+          $ref: "#/components/schemas/User"
+        receiverId:
+          type: string
+        text:
+          type: string
+        isRead:
+          type: boolean
+        createdAt:
+          type: integer
+      required: [id, senderId, text]
+
+    SendMessageBody:
+      type: object
+      properties:
+        text:
+          type: string
+      required: [text]
+
+    Chat:
+      type: object
+      properties:
+        userId:
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+        lastMessage:
+          $ref: "#/components/schemas/Message"
+        unreadCount:
+          type: integer
+      required: [userId]
+
+    MarketplaceStats:
+      type: object
+      properties:
+        totalProducts:
+          type: integer
+        totalUsers:
+          type: integer
+        totalDeals:
+          type: integer
+        totalVolume:
+          type: number
+        onlineUsers:
+          type: integer
+        categoryCounts:
+          type: array
+          items:
+            type: object
+            properties:
+              category:
+                type: string
+              count:
+                type: integer
+      required: [totalProducts, totalUsers, totalDeals]
+
+    AdminStats:
+      type: object
+      properties:
+        totalUsers:
+          type: integer
+        totalProducts:
+          type: integer
+        totalDeals:
+          type: integer
+        totalRevenue:
+          type: number
+        pendingWithdrawals:
+          type: integer
+        activeDisputes:
+          type: integer
+        todayDeals:
+          type: integer
+        todayRegistrations:
+          type: integer
+        todayVolume:
+          type: number
+      required: [totalUsers, totalProducts, totalDeals]
+
+    AdminUsersResponse:
+      type: object
+      properties:
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/User"
+        total:
+          type: integer
+        page:
+          type: integer
+        totalPages:
+          type: integer
+      required: [users, total]
+
+    AdminUserDetail:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        avatar:
+          type: string
+        balance:
+          type: string
+        frozenBalance:
+          type: string
+        totalDeposited:
+          type: string
+        totalWithdrawn:
+          type: string
+        totalVolume:
+          type: string
+        isAdmin:
+          type: boolean
+        isVerified:
+          type: boolean
+        isBanned:
+          type: boolean
+        totalSales:
+          type: integer
+        totalPurchases:
+          type: integer
+        rating:
+          type: string
+        reviewCount:
+          type: integer
+        sellerLevel:
+          type: string
+        telegramUsername:
+          type: string
+        createdAt:
+          type: integer
+        lastActive:
+          type: integer
+        buyerDeals:
+          type: integer
+        sellerDeals:
+          type: integer
+        recentTransactions:
+          type: array
+          items:
+            type: object
+      required: [id, username]
+
+    AdminBalanceAdjustBody:
+      type: object
+      properties:
+        amount:
+          type: number
+        type:
+          type: string
+          enum: [add, deduct]
+        description:
+          type: string
+      required: [amount, type]
+
+    AdminTransactionsResponse:
+      type: object
+      properties:
+        transactions:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              userId:
+                type: string
+              username:
+                type: string
+              type:
+                type: string
+              amount:
+                type: string
+              currency:
+                type: string
+              status:
+                type: string
+              description:
+                type: string
+              createdAt:
+                type: integer
+        total:
+          type: integer
+        page:
+          type: integer
+        totalPages:
+          type: integer
+      required: [transactions, total]
+
+    RevenueChartPoint:
+      type: object
+      properties:
+        date:
+          type: string
+        revenue:
+          type: number
+        dealsCount:
+          type: integer
+      required: [date, revenue, dealsCount]
+
+    AdminReviewsResponse:
+      type: object
+      properties:
+        reviews:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              rating:
+                type: integer
+              comment:
+                type: string
+              createdAt:
+                type: integer
+              dealId:
+                type: string
+              reviewer:
+                type: object
+              seller:
+                type: object
+        total:
+          type: integer
+        page:
+          type: integer
+        totalPages:
+          type: integer
+      required: [reviews, total]
+
+    AdminBroadcastBody:
+      type: object
+      properties:
+        text:
+          type: string
+        targetUserId:
+          type: string
+      required: [text]
