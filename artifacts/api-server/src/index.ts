@@ -1,4 +1,4 @@
-import app from "./app.js";
+import app from "./app";
 import { logger } from "./lib/logger";
 import { seed } from "./seed";
 import { pool } from "@workspace/db";
