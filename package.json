@@ -2,16 +2,12 @@
   "name": "kali-gpt-workspace",
   "version": "1.0.0",
   "private": true,
-  "type": "module",
   "scripts": {
-    "start": "cd artifacts/api-server && npx tsx src/index.ts",
+    "start": "npx tsx artifacts/api-server/src/index.ts",
     "build": "echo 'Skipping build...'"
   },
   "devDependencies": {
     "typescript": "^5.0.0",
     "tsx": "^4.7.0"
-  },
-  "dependencies": {
-    "tslib": "^2.6.0"
   }
 }
