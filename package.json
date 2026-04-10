@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "npx tsx artifacts/api-server/src/index.ts",
+    "start": "npx tsx --experimental-specifier-resolution=node artifacts/api-server/src/index.ts",
     "build": "echo 'Skipping build...'"
   },
   "devDependencies": {
