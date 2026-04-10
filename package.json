@@ -1,14 +1,16 @@
 {
-  "name": "workspace",
-  "version": "0.0.0",
-  "license": "MIT",
+  "name": "kali-gpt-workspace",
+  "version": "1.0.0",
+  "private": true,
   "scripts": {
-    "start": "node index.js",
+    "start": "npx ts-node artifacts/api-server/src/index.ts",
     "build": "pnpm -r --if-present run build"
   },
-  "private": true,
   "devDependencies": {
-    "typescript": "~5.9.2",
-    "prettier": "^3.8.1"
+    "typescript": "^5.0.0",
+    "ts-node": "^10.9.0"
+  },
+  "dependencies": {
+    "tsx": "^4.0.0"
   }
 }
