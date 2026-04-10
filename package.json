@@ -2,9 +2,10 @@
   "name": "kali-gpt-workspace",
   "version": "1.0.0",
   "private": true,
+  "type": "commonjs",
   "scripts": {
     "start": "npx tsx artifacts/api-server/src/index.ts",
-    "build": "echo 'Skipping build...'"
+    "build": "echo 'Skipping build stage...'"
   },
   "devDependencies": {
     "typescript": "^5.0.0",
