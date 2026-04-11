@@ -4,8 +4,8 @@
   "private": true,
   "type": "commonjs",
   "scripts": {
-    "start": "NODE_OPTIONS='--loader tsx' node artifacts/api-server/src/index.ts",
-    "build": "echo 'Build skipped'"
+    "build": "pnpm --filter @workspace/api-server run build",
+    "start": "node --enable-source-maps artifacts/api-server/dist/index.mjs"
   },
   "dependencies": {
     "tsx": "^4.7.0",
